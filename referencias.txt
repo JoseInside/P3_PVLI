@@ -1,0 +1,7 @@
+SteamWorld Dig : http://makegames.pixelprospector.com/post/96020514654/steamworld-dig
+
+Fez : http://www.fezgame.com/
+
+Callback Monedas : http://phaser.io/examples/v2/tilemaps/tile-callbacks
+
+Partículas : http://phaser.io/examples/v2/particlestorm/birdy-nam-nam
