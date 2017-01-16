@@ -1,8 +1,12 @@
 var GameOver = {
     create: function () {
         console.log("Game Over");
-
-        var button = this.game.add.button(400, 300, 'button', this.restart, this, 2, 1, 0);
+        
+        
+        var button = this.game.add.button(400, 300, 
+                                          'button', 
+                                          this.restart, 
+                                          this, 2, 1, 0);
         button.anchor.set(0.5);
         
         var goText = this.game.add.text(400, 100, "GameOver");
@@ -17,7 +21,10 @@ var GameOver = {
         button.addChild(text);
         
         //TODO 8 crear un boton con el texto 'Return Main Menu' que nos devuelva al menu del juego.
-        var button2 = this.game.add.button(400, 200, 'button', this.returnMenu, this, 2, 1, 0);
+         var button2 = this.game.add.button(400, 200, 
+                                          'button', 
+                                          this.returnMenu, 
+                                          this, 2, 1, 0);
         button2.anchor.set(0.5);
         button2.addChild(rText);
     },

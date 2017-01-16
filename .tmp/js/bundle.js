@@ -1,3 +1,197 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var GameOver = {
+    create: function () {
+        console.log("Game Over");
+        
+        
+        var button = this.game.add.button(400, 300, 
+                                          'button', 
+                                          this.restart, 
+                                          this, 2, 1, 0);
+        button.anchor.set(0.5);
+        
+        var goText = this.game.add.text(400, 100, "GameOver");
+        var text = this.game.add.text(0, 0, "Reset Game");
+        var rText = this.game.add.text (0, 0, "Return Main Menu");
+        goText.font ='Sniglet';
+        text.font = 'Sniglet';
+        rText.font = 'Sniglet';
+        text.anchor.set(0.5);
+        goText.anchor.set(0.5);
+        rText.anchor.set(0.5);
+        button.addChild(text);
+        
+        //TODO 8 crear un boton con el texto 'Return Main Menu' que nos devuelva al menu del juego.
+         var button2 = this.game.add.button(400, 200, 
+                                          'button', 
+                                          this.returnMenu, 
+                                          this, 2, 1, 0);
+        button2.anchor.set(0.5);
+        button2.addChild(rText);
+    },
+    
+    //TODO 7 declarar el callback del boton.
+    returnMenu: function() {
+      this.game.state.start('menu');
+    },
+
+    restart: function () {
+        this.game.state.start('preloader');      
+    }
+    
+};
+
+module.exports = GameOver;
+},{}],2:[function(require,module,exports){
+'use strict';
+
+//TODO 1.1 Require de las escenas, play_scene, gameover_scene y menu_scene.
+//***
+var PlayScene = require('./play_scene');
+var GameOver = require('./gameover_scene');
+var MenuScene = require('./menu_scene');
+
+//  The Google WebFont Loader will look for this object, so create it before loading the script.
+
+
+var BootScene = {
+  preload: function () {
+    // load here assets required for the loading screen
+    this.game.load.image('preloader_bar', 'images/preloader_bar.png');
+    //this.game.load.spritesheet('button', 'images/buttons.png', 168, 70);
+    this.game.load.image('button', 'images/ini_button.png');
+    this.game.load.image('logo', 'images/fondo.png');
+    this.game.load.image('fondoJuego', 'images/background.png');
+    //this.game.load.image('fondo', 'images/fondo.png');
+  },
+
+  create: function () {
+    //this.game.state.start('preloader');
+      this.game.state.start('menu');
+      
+  }
+};
+
+
+var PreloaderScene = {
+  preload: function () {
+    this.loadingBar = this.game.add.sprite(100,300, 'preloader_bar');
+    this.loadingBar.anchor.setTo(0, 0.5); 
+    this.game.load.setPreloadSprite(this.loadingBar);
+    this.game.stage.backgroundColor = "#000000";
+    
+
+      this.load.onLoadStart.add(this.loadStart, this);
+      //TODO 2.1 Cargar el tilemap images/map.json con el nombre de la cache 'tilemap'.
+      //la imagen 'images/simples_pimples.png' con el nombre de la cache 'tiles' y
+      // el atlasJSONHash con 'images/rush_spritesheet.png' como imagen y 'images/rush_spritesheet.json'
+      //como descriptor de la animación.
+      //***MOD 1a Y 3a
+      this.game.load.tilemap('tilemap', 'maps/map1.json', null, Phaser.Tilemap.TILED_JSON);
+      this.game.load.image('tiles','images/tileset.png');
+      this.game.load.atlasJSONHash('rush_idle01','images/rush_spritesheet.png','images/rush_spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+
+
+      //TODO 2.2a Escuchar el evento onLoadComplete con el método loadComplete que el state 'play'
+      //***
+     // game.addEventListener('onLoadComplete', this.loadComplete);
+     this.game.load.onLoadComplete.add(this.loadComplete,this);
+  
+  },
+
+  loadStart: function () {
+    
+    console.log("Game Assets Loading ...");
+    
+  },
+    
+    
+     //TODO 2.2b function loadComplete()
+    loadComplete: function () {
+        this._ready = true;   
+        console.log("Assets loaded")
+        this.game.state.start('play');    
+    },
+    
+    update: function(){
+        this._loadingBar
+    }
+};
+
+
+var wfconfig = {
+ 
+    active: function() { 
+        console.log("font loaded");
+        init();
+        
+    },
+ 
+    google: {
+        families: ['Sniglet']
+    }
+};
+ 
+function init () {
+
+   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game');
+
+      game.state.add('boot', BootScene);
+      game.state.add('preloader', PreloaderScene);
+      game.state.add('play',PlayScene);
+      game.state.add('gameOver', GameOver);
+      game.state.add('menu', MenuScene);
+      game.state.start('boot');
+      
+
+ };
+//TODO 3.2 Cargar Google font cuando la página esté cargada con wfconfig.
+//TODO 3.3 La creación del juego y la asignación de los states se hará en el método init().
+
+window.onload = function () {
+      //var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game');
+      //TODO 1.2 Añadir los states 'boot' BootScene, 'menu' MenuScene, 'preloader' PreloaderScene, 'play' PlayScene, 'gameOver' GameOver.
+       WebFont.load(wfconfig); 
+     //TODO 1.3 iniciar el state 'boot'.  
+     //this.game.state.start('boot');
+         
+};
+
+},{"./gameover_scene":1,"./menu_scene":3,"./play_scene":4}],3:[function(require,module,exports){
+var MenuScene = {
+
+    preload : function()
+    {
+      console.log("preload de menu scene");
+      this.game.stage.backgroundColor = "#000000";
+      
+    },
+    create: function () {
+        
+        var logo = this.game.add.sprite(this.game.world.centerX, 
+                                        this.game.world.centerY, 
+                                        'logo');
+        logo.anchor.setTo(0.5, 0.5);
+        var buttonStart = this.game.add.button(this.game.world.centerX, 
+                                               this.game.world.centerY + 250, 
+                                               'button', 
+                                               this.actionOnClick, 
+                                               this, 2, 1, 0);
+        buttonStart.anchor.set(0.5);
+        var textStart = this.game.add.text(0, 0, "Play!");
+        textStart.font = 'Sniglet';
+        textStart.anchor.set(0.5);
+        buttonStart.addChild(textStart);
+
+    },
+    
+    actionOnClick: function(){
+        this.game.state.start('preloader');
+    } 
+};
+
+module.exports = MenuScene;
+},{}],4:[function(require,module,exports){
 'use strict';
 
 //Enumerados: PlayerState son los estado por los que pasa el player. Directions son las direcciones a las que se puede
@@ -214,3 +408,5 @@ var PlayScene = {
     
     
 module.exports = PlayScene;
+
+},{}]},{},[2]);

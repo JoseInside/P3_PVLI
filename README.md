@@ -1,2 +1,2 @@
-# P3_PVLI
-Primer videojuego en Javascript
+# Ej_Tema5
+PVLI - Ejercicios del Tema 5
