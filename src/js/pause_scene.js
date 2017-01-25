@@ -1,6 +1,6 @@
-var GameOver = {
+var PauseScene = {
     create: function () {
-        console.log("Game Over");
+        console.log("PauseScene");
 
         var button = this.game.add.button(400, 300, 
                                           'button', 
@@ -11,6 +11,7 @@ var GameOver = {
         var goText = this.game.add.text(400, 100, "GameOver");
         var text = this.game.add.text(0, 0, "Reset Game");
         var rText = this.game.add.text (0, 0, "Main Menu");
+        
         goText.font ='Sniglet';
         text.font = 'Sniglet';
         rText.font = 'Sniglet';

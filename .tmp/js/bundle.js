@@ -2,8 +2,7 @@
 var GameOver = {
     create: function () {
         console.log("Game Over");
-        
-        
+
         var button = this.game.add.button(400, 300, 
                                           'button', 
                                           this.restart, 
@@ -12,10 +11,13 @@ var GameOver = {
         
         var goText = this.game.add.text(400, 100, "GameOver");
         var text = this.game.add.text(0, 0, "Reset Game");
-        var rText = this.game.add.text (0, 0, "Return Main Menu");
+        var rText = this.game.add.text (0, 0, "Main Menu");
         goText.font ='Sniglet';
         text.font = 'Sniglet';
         rText.font = 'Sniglet';
+        goText.addColor("#FFFFFF", 0);
+        text.addColor("#3A44BF", 0);
+        rText.addColor("#3A44BF", 0);
         text.anchor.set(0.5);
         goText.anchor.set(0.5);
         rText.anchor.set(0.5);
@@ -58,11 +60,11 @@ var BootScene = {
   preload: function () {
     // load here assets required for the loading screen
     this.game.load.image('preloader_bar', 'images/preloader_bar.png');
-    //this.game.load.spritesheet('button', 'images/buttons.png', 168, 70);
-    this.game.load.image('button', 'images/ini_button.png');
-    this.game.load.image('logo', 'images/fondo.png');
+    this.game.load.image('button', 'images/ini_button2.png');
+    this.game.load.image('logo', 'images/fondo2.png');
     this.game.load.image('fondoJuego', 'images/background.png');
     //this.game.load.image('fondo', 'images/fondo.png');
+    this.game.load.audio('intro', 'music/intro_theme.mp3');
   },
 
   create: function () {
@@ -87,15 +89,18 @@ var PreloaderScene = {
       // el atlasJSONHash con 'images/rush_spritesheet.png' como imagen y 'images/rush_spritesheet.json'
       //como descriptor de la animación.
       //***MOD 1a Y 3a
-      this.game.load.tilemap('tilemap', 'maps/map1.json', null, Phaser.Tilemap.TILED_JSON);
+      //this.game.load.tilemap('tilemap', 'maps/map1.json', null, Phaser.Tilemap.TILED_JSON);
+      
       this.game.load.image('tiles','images/tileset.png');
-      this.game.load.atlasJSONHash('rush_idle01','images/rush_spritesheet.png','images/rush_spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+      this.game.load.image('tiles2','images/TileKit.png');
+      this.game.load.tilemap('tilemap2', 'maps/map2.json', null, Phaser.Tilemap.TILED_JSON);
+      this.game.load.atlasJSONHash('Idle__000','images/spritesheet.png','images/spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
 
-
+      this.game.load.audio('audio_fondo','music/iceland_theme.mp3');
+      this.game.load.audio('jump','music/jump.mp3');
       //TODO 2.2a Escuchar el evento onLoadComplete con el método loadComplete que el state 'play'
       //***
-     // game.addEventListener('onLoadComplete', this.loadComplete);
-     this.game.load.onLoadComplete.add(this.loadComplete,this);
+      this.game.load.onLoadComplete.add(this.loadComplete,this);
   
   },
 
@@ -165,6 +170,7 @@ var MenuScene = {
       console.log("preload de menu scene");
       this.game.stage.backgroundColor = "#000000";
       
+      
     },
     create: function () {
         
@@ -179,15 +185,26 @@ var MenuScene = {
                                                this, 2, 1, 0);
         buttonStart.anchor.set(0.5);
         var textStart = this.game.add.text(0, 0, "Play!");
+        textStart.addColor("#3A44BF", 0);
         textStart.font = 'Sniglet';
         textStart.anchor.set(0.5);
         buttonStart.addChild(textStart);
+
+        this.intro_music = this.game.add.audio('intro');
+        this.intro_music.loop = true;
+        this.intro_music.play();
 
     },
     
     actionOnClick: function(){
         this.game.state.start('preloader');
-    } 
+    }, 
+
+    shutdown: function() {
+
+      this.intro_music.destroy();
+    }
+
 };
 
 module.exports = MenuScene;
@@ -204,7 +221,7 @@ var PlayScene = {
     _arno: {}, //player
     _speed: 300, //velocidad del player
     _jumpSpeed: 600, //velocidad de salto
-    _jumpHight: 150, //altura máxima del salto.
+    _jumpHight: 130, //altura máxima del salto.
     _playerState: PlayerState.STOP, //estado del player
     _direction: Direction.NONE,  //dirección inicial del player. NONE es ninguna dirección.
 
@@ -219,11 +236,16 @@ var PlayScene = {
         fondoJuego.anchor.setTo(0.5, 0.5);
         fondoJuego.fixedToCamera = true;
 
-      this.map = this.game.add.tilemap('tilemap');
+      
+      //*** CREACIÓN DE ASSETS DEL ENTORNO ***
+
+      this.map = this.game.add.tilemap('tilemap2');
       this.map.addTilesetImage('tileset','tiles');
+      this.map.addTilesetImage('TileKit','tiles2');
       
       //Creacion de las layers
       this.backgroundLayer = this.map.createLayer('BackgroundLayer');
+      this.backgroundLayer = this.map.createLayer('BackgroundLayer2');
       this.groundLayer = this.map.createLayer('GroundLayer');
       //plano de muerte
       this.death = this.map.createLayer('Death');
@@ -231,24 +253,32 @@ var PlayScene = {
       this.map.setCollisionBetween(1, 5000, true, 'Death');
       this.map.setCollisionBetween(1, 5000, true, 'GroundLayer');
       this.death.visible = true;
-      //Cambia la escala a x3.
+      //Cambia la escala a x1.
       this.groundLayer.setScale(1,1);
       this.backgroundLayer.setScale(1,1);
       this.death.setScale(1,1);
 
+      //*** ASSETS DE EFECTOS Y MÚSICA ***
+      this.musica_fondo = this.game.add.audio('audio_fondo');
+      this.jump = this.game.add.audio('jump');
+      this.musica_fondo.loop = true;
+      this.musica_fondo.play();
+
+
       //POR ÚLTIMO JUGADOR PARA NO ESTAR DETRÁS DE LA ESCENA
-      this._arno = this.game.add.sprite(250, 250, 'rush_idle01');
-      
+      this._arno = this.game.add.sprite(100, 1400, 'Idle__000');
+      this._arno.scale.setTo(0.1,0.1);
+      this._arno.anchor.setTo(0,0);
       //resize world and adjust to the screen
       this.groundLayer.resizeWorld(); 
       
       //nombre de la animación, frames, framerate, isloop
       this._arno.animations.add('run',
-                    Phaser.Animation.generateFrameNames('rush_run',1,5,'',2),10,true);
+                    Phaser.Animation.generateFrameNames('Run__',0,5,'',3),10,true);
       this._arno.animations.add('stop',
-                    Phaser.Animation.generateFrameNames('rush_idle',1,1,'',2),0,false);
+                    Phaser.Animation.generateFrameNames('Idle__',0,0,'',3),0,false);
       this._arno.animations.add('jump',
-                     Phaser.Animation.generateFrameNames('rush_jump',2,2,'',2),0,false);
+                     Phaser.Animation.generateFrameNames('Jump__',0,2,'',3),0,false);
       
       this.configure();
   },
@@ -304,33 +334,48 @@ var PlayScene = {
         switch(this._playerState){
                 
             case PlayerState.STOP:
-                moveDirection.x = 0;
+                this._arno.body.velocity.x = 0;
+                //moveDirection.x = 0;
                 break;
             case PlayerState.JUMP:
             case PlayerState.RUN:
             case PlayerState.FALLING:
                 if(movement === Direction.RIGHT){
-                    moveDirection.x = this._speed;
+                  this._arno.body.velocity.x = 250;
+                  
+                    //moveDirection.x = this._speed;
                     if(this._arno.scale.x < 0)
+                        this._arno.scale.x *= -1;
+                      
+                }
+                else if(movement === Direction.LEFT){
+                  this._arno.body.velocity.x = -250;
+                  if(this._arno.scale.x > 0)
                         this._arno.scale.x *= -1;
                 }
                 else{
-                    moveDirection.x = -this._speed;
-                    if(this._arno.scale.x > 0)
-                        this._arno.scale.x *= -1; 
+
+                  this._arno.body.velocity.x = 0;
+                
                 }
-                if(this._playerState === PlayerState.JUMP)
-                    moveDirection.y = -this._jumpSpeed;
-                if(this._playerState === PlayerState.FALLING)
-                    moveDirection.y = 0;
+                if(this._playerState === PlayerState.JUMP){
+                   this._arno.body.velocity.y = -400;
+                    this.jump.play();
+                    //moveDirection.y = -this._jumpSpeed;
+                  }
+                if(this._playerState === PlayerState.FALLING){
+                    this._arno.body.velocity.y = 400;
+                    //moveDirection.y = 0;
+                    //moveDirection.x = 200;
+                  }
                 break;    
         }
-        //movement
-        this.movement(moveDirection,5,
-                      this.backgroundLayer.layer.widthInPixels*this.backgroundLayer.scale.x - 10);
+
         this.checkPlayerFell();
-    },
-    
+        this.checkPlayerPause();
+
+        this.input.onDown.add(this.isUnpaused, this);
+    },    
     
     canJump: function(collisionWithTilemap){
         return this.isStanding() && collisionWithTilemap || this._jamping;
@@ -343,9 +388,18 @@ var PlayScene = {
     
     checkPlayerFell: function(){
         if(this.game.physics.arcade.collide(this._arno, this.death))
-            this.onPlayerFell();
+          this.onPlayerFell();
     },
-        
+    checkPlayerPause: function () {
+        if(this.game.input.keyboard.isDown(Phaser.Keyboard.ESC))
+          if(!this.game.paused){
+            this.game.paused = true;
+            this.pauseMenu();
+          }
+          this.input.onDown.add(this.isUnpaused, this);
+
+    }, 
+
     isStanding: function(){
         return this._arno.body.blocked.down || this._arno.body.touching.down
     },
@@ -367,18 +421,55 @@ var PlayScene = {
         }
         return movement;
     },
+
+    pauseMenu: function () {      
+
+      this.pause_title = this.game.add.text(335, 1100, "Pause Menu");
+      this.continue_text = this.game.add.text(250, 1150, "Click anywhere to continue");
+
+      this.menu_button = this.game.add.button(400, 1400, 'button', this.backToMenu, this, 2, 1, 0);
+      this.menu_button.anchor.set(0.5);
+      this.unido = this.game.add.text(0, 0, "Main Menu");
+      this.unido.anchor.set(0.5);
+      this.menu_button.addChild(this.unido);
+
+      this.unido.addColor("#3A44BF", 0);
+      this.pause_title.addColor("#3A44BF", 0);
+      this.continue_text.addColor("#3A44BF", 0);
+      
+    },
+
+    isUnpaused: function () {
+      
+      this.pause_title.destroy();
+      this.menu_button.destroy();
+      this.continue_text.destroy();
+      this.game.paused = false;
+    },
+
+    backToMenu: function () {
+    //  this.pause_title.destroy();
+    //  this.return_button.destroy();
+    //  this.menu_button.destroy();
+      this.game.paused = false;
+      //this.game.state.start('menu');
+    },
+
     //configure the scene
     configure: function(){
         //Start the Arcade Physics systems
         //this.game.world.setBounds(0, 0, 2400, 160);
-        this.game.world.setBounds(0, 0, 1600, 1500);
+        this.game.world.setBounds(0, 0, 1600, 1600);
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
         //this.game.stage.backgroundColor = '#a9f0ff';
         this.game.stage.backgroundColor = "#000000";
         this.game.physics.arcade.enable(this._arno);
         
-        this._arno.body.bounce.y = 0.2;
-        this._arno.body.gravity.y = 20000;
+        
+        this._arno.body.collideWorldBounds = true;
+        this._arno.body.setSize(300, 480);
+        this._arno.body.bounce.y = 0;
+        this._arno.body.gravity.y = 1500;
         this._arno.body.gravity.x = 0;
         this._arno.body.velocity.x = 0;
         this.game.camera.follow(this._arno);
@@ -386,10 +477,10 @@ var PlayScene = {
     //move the player
     movement: function(point, xMin, xMax){
         this._arno.body.velocity = point;// * this.game.time.elapseTime;
-        
-        if((this._arno.x < xMin && point.x < 0)|| (this._arno.x > xMax && point.x > 0))
+       /*
+        if((this._arno.x < xMin && point.x < 0) || (this._arno.x > xMax && point.x > 0))
             this._arno.body.velocity.x = 0;
-
+      */
     },
     
     //TODO 9 destruir los recursos tilemap, tiles y logo.
@@ -399,13 +490,12 @@ var PlayScene = {
       this.cache.removeImage('tilemap');
       this.cache.removeImage('tileset');
       this.cache.removeImage('tiles');
+      this.musica_fondo.destroy();
+      this.jump.destroy();
       this.game.world.setBounds(0,0,800,600);
     }
     
 };
-
-    
-    
     
 module.exports = PlayScene;
 
