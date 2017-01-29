@@ -1,5 +1,43 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var EndScene = {
+
+    create: function () {
+        console.log("End");
+
+        var end_background = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'end_back');
+        end_background.anchor.setTo(0.5, 0.5);
+        end_background.fixedToCamera = true;
+
+        var endText = this.game.add.text(400, 100, "Congratz! You've reached the clouds!");
+        var rText = this.game.add.text (0, 0, "Main Menu");
+
+        var button = this.game.add.button(400, 200, 'button', this.returnMenu, this, 2, 1, 0);
+        button.anchor.set(0.5);
+        button.addChild(rText);
+        
+        endText.font ='Sniglet';
+        rText.font = 'Sniglet';
+        endText.addColor("#FFFFFF", 0);
+        rText.addColor("#3A44BF", 0);
+        endText.anchor.set(0.5);
+        rText.anchor.set(0.5);
+
+        this.intro_music = this.game.add.audio('intro');
+        this.intro_music.loop = true;
+        this.intro_music.play();
+
+    },
+    
+    //TODO 7 declarar el callback del boton.
+    returnMenu: function() {
+      this.game.state.start('menu');
+    },  
+};
+
+module.exports = EndScene;
+},{}],2:[function(require,module,exports){
 var GameOver = {
+
     create: function () {
         console.log("Game Over");
 
@@ -44,7 +82,7 @@ var GameOver = {
 };
 
 module.exports = GameOver;
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 //TODO 1.1 Require de las escenas, play_scene, gameover_scene y menu_scene.
@@ -52,6 +90,7 @@ module.exports = GameOver;
 var PlayScene = require('./play_scene');
 var GameOver = require('./gameover_scene');
 var MenuScene = require('./menu_scene');
+var EndScene = require('./end_scene');
 
 //  The Google WebFont Loader will look for this object, so create it before loading the script.
 
@@ -63,14 +102,13 @@ var BootScene = {
     this.game.load.image('button', 'images/ini_button2.png');
     this.game.load.image('logo', 'images/fondo2.png');
     this.game.load.image('fondoJuego', 'images/background.png');
+    this.game.load.image('end_back', 'images/end_back.png');
     //this.game.load.image('fondo', 'images/fondo.png');
     this.game.load.audio('intro', 'music/intro_theme.mp3');
   },
 
   create: function () {
-    //this.game.state.start('preloader');
-      this.game.state.start('menu');
-      
+    this.game.state.start('menu');
   }
 };
 
@@ -93,8 +131,10 @@ var PreloaderScene = {
       
       this.game.load.image('tiles','images/tileset.png');
       this.game.load.image('tiles2','images/TileKit.png');
+      //this.game.load.image('end_portal','images/end_portal.png');
       this.game.load.tilemap('tilemap2', 'maps/map2.json', null, Phaser.Tilemap.TILED_JSON);
       this.game.load.atlasJSONHash('Idle__000','images/spritesheet.png','images/spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+      this.game.load.atlasJSONHash('00_portal','images/end_portal.png','images/end_portal.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
 
       this.game.load.audio('audio_fondo','music/iceland_theme.mp3');
       this.game.load.audio('jump','music/jump.mp3');
@@ -146,6 +186,7 @@ function init () {
       game.state.add('play',PlayScene);
       game.state.add('gameOver', GameOver);
       game.state.add('menu', MenuScene);
+      game.state.add('end', EndScene);
       game.state.start('boot');
       
 
@@ -162,7 +203,7 @@ window.onload = function () {
          
 };
 
-},{"./gameover_scene":1,"./menu_scene":3,"./play_scene":4}],3:[function(require,module,exports){
+},{"./end_scene":1,"./gameover_scene":2,"./menu_scene":4,"./play_scene":5}],4:[function(require,module,exports){
 var MenuScene = {
 
     preload : function()
@@ -208,7 +249,7 @@ var MenuScene = {
 };
 
 module.exports = MenuScene;
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 //Enumerados: PlayerState son los estado por los que pasa el player. Directions son las direcciones a las que se puede
@@ -249,6 +290,12 @@ var PlayScene = {
       this.groundLayer = this.map.createLayer('GroundLayer');
       //plano de muerte
       this.death = this.map.createLayer('Death');
+      
+      //FinishObject
+      this.end = this.game.add.sprite(78, 628, '00_portal');
+      this.end.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
+      this.end.scale.setTo(0.5);
+
       //Colisiones con el plano de muerte y con el plano de muerte y con suelo.
       this.map.setCollisionBetween(1, 5000, true, 'Death');
       this.map.setCollisionBetween(1, 5000, true, 'GroundLayer');
@@ -371,9 +418,10 @@ var PlayScene = {
                 break;    
         }
 
+        this.end.animations.play('idle');
         this.checkPlayerFell();
         this.checkPlayerPause();
-
+        this.checkEndLevel();
         this.input.onDown.add(this.isUnpaused, this);
     },    
     
@@ -398,7 +446,16 @@ var PlayScene = {
           }
           this.input.onDown.add(this.isUnpaused, this);
 
+    },
+
+    checkEndLevel: function () {
+      if(this.game.physics.arcade.collide(this._arno, this.end))
+        this.onPlayerEnd();
     }, 
+
+    onPlayerEnd: function () {
+      this.game.state.start('end');
+    },
 
     isStanding: function(){
         return this._arno.body.blocked.down || this._arno.body.touching.down
@@ -436,23 +493,22 @@ var PlayScene = {
       this.unido.addColor("#3A44BF", 0);
       this.pause_title.addColor("#3A44BF", 0);
       this.continue_text.addColor("#3A44BF", 0);
-      
+      console.log(this._arno.x);
+      console.log(this._arno.y);
     },
 
     isUnpaused: function () {
-      
-      this.pause_title.destroy();
-      this.menu_button.destroy();
-      this.continue_text.destroy();
-      this.game.paused = false;
+      if(this.game.paused){
+        this.pause_title.destroy();
+        this.menu_button.destroy();
+        this.continue_text.destroy();
+        this.game.paused = false;
+      }
     },
 
     backToMenu: function () {
-    //  this.pause_title.destroy();
-    //  this.return_button.destroy();
-    //  this.menu_button.destroy();
       this.game.paused = false;
-      //this.game.state.start('menu');
+      this.game.state.start('menu');
     },
 
     //configure the scene
@@ -464,7 +520,7 @@ var PlayScene = {
         //this.game.stage.backgroundColor = '#a9f0ff';
         this.game.stage.backgroundColor = "#000000";
         this.game.physics.arcade.enable(this._arno);
-        
+        this.game.physics.arcade.enable(this.end);
         
         this._arno.body.collideWorldBounds = true;
         this._arno.body.setSize(300, 480);
@@ -499,4 +555,4 @@ var PlayScene = {
     
 module.exports = PlayScene;
 
-},{}]},{},[2]);
+},{}]},{},[3]);

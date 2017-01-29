@@ -1,4 +1,5 @@
 var GameOver = {
+
     create: function () {
         console.log("Game Over");
 

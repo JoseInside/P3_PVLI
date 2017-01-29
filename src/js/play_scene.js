@@ -38,6 +38,12 @@ var PlayScene = {
       this.groundLayer = this.map.createLayer('GroundLayer');
       //plano de muerte
       this.death = this.map.createLayer('Death');
+      
+      //FinishObject
+      this.end = this.game.add.sprite(78, 628, '00_portal');
+      this.end.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
+      this.end.scale.setTo(0.5);
+
       //Colisiones con el plano de muerte y con el plano de muerte y con suelo.
       this.map.setCollisionBetween(1, 5000, true, 'Death');
       this.map.setCollisionBetween(1, 5000, true, 'GroundLayer');
@@ -160,9 +166,10 @@ var PlayScene = {
                 break;    
         }
 
+        this.end.animations.play('idle');
         this.checkPlayerFell();
         this.checkPlayerPause();
-
+        this.checkEndLevel();
         this.input.onDown.add(this.isUnpaused, this);
     },    
     
@@ -187,7 +194,16 @@ var PlayScene = {
           }
           this.input.onDown.add(this.isUnpaused, this);
 
+    },
+
+    checkEndLevel: function () {
+      if(this.game.physics.arcade.collide(this._arno, this.end))
+        this.onPlayerEnd();
     }, 
+
+    onPlayerEnd: function () {
+      this.game.state.start('end');
+    },
 
     isStanding: function(){
         return this._arno.body.blocked.down || this._arno.body.touching.down
@@ -225,23 +241,22 @@ var PlayScene = {
       this.unido.addColor("#3A44BF", 0);
       this.pause_title.addColor("#3A44BF", 0);
       this.continue_text.addColor("#3A44BF", 0);
-      
+      console.log(this._arno.x);
+      console.log(this._arno.y);
     },
 
     isUnpaused: function () {
-      
-      this.pause_title.destroy();
-      this.menu_button.destroy();
-      this.continue_text.destroy();
-      this.game.paused = false;
+      if(this.game.paused){
+        this.pause_title.destroy();
+        this.menu_button.destroy();
+        this.continue_text.destroy();
+        this.game.paused = false;
+      }
     },
 
     backToMenu: function () {
-    //  this.pause_title.destroy();
-    //  this.return_button.destroy();
-    //  this.menu_button.destroy();
       this.game.paused = false;
-      //this.game.state.start('menu');
+      this.game.state.start('menu');
     },
 
     //configure the scene
@@ -253,7 +268,7 @@ var PlayScene = {
         //this.game.stage.backgroundColor = '#a9f0ff';
         this.game.stage.backgroundColor = "#000000";
         this.game.physics.arcade.enable(this._arno);
-        
+        this.game.physics.arcade.enable(this.end);
         
         this._arno.body.collideWorldBounds = true;
         this._arno.body.setSize(300, 480);

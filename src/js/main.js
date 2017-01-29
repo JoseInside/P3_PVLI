@@ -5,6 +5,7 @@
 var PlayScene = require('./play_scene');
 var GameOver = require('./gameover_scene');
 var MenuScene = require('./menu_scene');
+var EndScene = require('./end_scene');
 
 //  The Google WebFont Loader will look for this object, so create it before loading the script.
 
@@ -16,14 +17,13 @@ var BootScene = {
     this.game.load.image('button', 'images/ini_button2.png');
     this.game.load.image('logo', 'images/fondo2.png');
     this.game.load.image('fondoJuego', 'images/background.png');
+    this.game.load.image('end_back', 'images/end_back.png');
     //this.game.load.image('fondo', 'images/fondo.png');
     this.game.load.audio('intro', 'music/intro_theme.mp3');
   },
 
   create: function () {
-    //this.game.state.start('preloader');
-      this.game.state.start('menu');
-      
+    this.game.state.start('menu');
   }
 };
 
@@ -46,8 +46,10 @@ var PreloaderScene = {
       
       this.game.load.image('tiles','images/tileset.png');
       this.game.load.image('tiles2','images/TileKit.png');
+      //this.game.load.image('end_portal','images/end_portal.png');
       this.game.load.tilemap('tilemap2', 'maps/map2.json', null, Phaser.Tilemap.TILED_JSON);
       this.game.load.atlasJSONHash('Idle__000','images/spritesheet.png','images/spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+      this.game.load.atlasJSONHash('00_portal','images/end_portal.png','images/end_portal.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
 
       this.game.load.audio('audio_fondo','music/iceland_theme.mp3');
       this.game.load.audio('jump','music/jump.mp3');
@@ -99,6 +101,7 @@ function init () {
       game.state.add('play',PlayScene);
       game.state.add('gameOver', GameOver);
       game.state.add('menu', MenuScene);
+      game.state.add('end', EndScene);
       game.state.start('boot');
       
 
