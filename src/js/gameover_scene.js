@@ -10,7 +10,7 @@ var GameOver = {
         button.anchor.set(0.5);
         
         var goText = this.game.add.text(400, 100, "GameOver");
-        var text = this.game.add.text(0, 0, "Reset Game");
+        var text = this.game.add.text(0, 0, "Reset Level");
         var rText = this.game.add.text (0, 0, "Main Menu");
         goText.font ='Sniglet';
         text.font = 'Sniglet';

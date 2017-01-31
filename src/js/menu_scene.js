@@ -32,6 +32,7 @@ var MenuScene = {
     },
     
     actionOnClick: function(){
+        this.game.nextLvl = 1;
         this.game.state.start('preloader');
     }, 
 

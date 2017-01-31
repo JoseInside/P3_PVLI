@@ -6,7 +6,7 @@ var PlayerState = {'JUMP':0, 'RUN':1, 'FALLING':2, 'STOP':3}
 var Direction = {'LEFT':0, 'RIGHT':1, 'NONE':3}
 
 //Scena de juego.
-var PlayScene = {
+var Play2Scene = {
     _arno: {}, //player
     _speed: 300, //velocidad del player
     _jumpSpeed: 600, //velocidad de salto
@@ -15,34 +15,43 @@ var PlayScene = {
     _direction: Direction.NONE,  //dirección inicial del player. NONE es ninguna dirección.
     _enemiesTotal: 3,
     _enemies : [],
-    //Método constructor...
+
   create: function () {
       //Creamos al player con un sprite por defecto.
       //TODO 5 Creamos a rush 'rush' con el sprite por defecto en el 10, 10 con la animación por defecto 'rush_idle01'
       //***
       var fondoJuego = this.game.add.sprite(this.game.world.centerX, 
                                         this.game.world.centerY, 
-                                        'fondo_lvl1');
-        fondoJuego.anchor.setTo(0.5, 0.5);
+                                        'fondo_lvl2');
+        fondoJuego.anchor.setTo(0.5);
         fondoJuego.fixedToCamera = true;
+        fondoJuego.scale.setTo(0.4);
 
+      
       //*** CREACIÓN DE ASSETS DEL ENTORNO ***
 
-      this.map = this.game.add.tilemap('tilemap2');
-      this.map.addTilesetImage('tileset','tiles');
+      this.map = this.game.add.tilemap('tilemap_lvl2');
+      //this.map.addTilesetImage('tileset','tiles');
       this.map.addTilesetImage('TileKit','tiles2');
       
       //Creacion de las layers
       this.backgroundLayer = this.map.createLayer('BackgroundLayer');
-      this.backgroundLayer2 = this.map.createLayer('BackgroundLayer2');
+      //this.backgroundLayer = this.map.createLayer('BackgroundLayer2');
       this.groundLayer = this.map.createLayer('GroundLayer');
       //PLANO MUERTE
       this.death = this.map.createLayer('Death');
       
       //*** ASSET PASO DE NIVEL (PORTAL) ***
-      this.end = this.game.add.sprite(78, 628, '00_portal');
+      this.end = this.game.add.sprite(988, 400, '00_portal');
       this.end.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
       this.end.scale.setTo(0.5);
+      //Teletransporte
+      this.teleport1 = this.game.add.sprite(1496, 1160, '00_portal');
+      this.teleport1.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
+      this.teleport1.scale.setTo(0.5);
+      this.teleport2 = this.game.add.sprite(78, 1000, '00_portal');
+      this.teleport2.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
+      this.teleport2.scale.setTo(0.5);
 
       //Colisiones con el plano de muerte y con el plano de muerte y con suelo.
       this.map.setCollisionBetween(1, 5000, true, 'Death');
@@ -61,9 +70,9 @@ var PlayScene = {
 
       //*** ASSETS ENEMIGOS ***
 
-       this._enemies.push(new this.EnemyLight(this.game, 300, 850));
-       this._enemies.push(new this.EnemyLight(this.game, 1526, 1040));
-       this._enemies.push(new this.EnemyLight(this.game, 495, 850));
+       this._enemies.push(new this.EnemyLight(this.game, 1005, 1010));
+       this._enemies.push(new this.EnemyLight(this.game, 392, 1321));
+       this._enemies.push(new this.EnemyLight(this.game, 829, 1350));
 
       //*** ASSETS JUGADOR ***
       this._arno = this.game.add.sprite(100, 1400, 'Idle__000');
@@ -153,6 +162,8 @@ var PlayScene = {
             case PlayerState.FALLING:
                 if(movement === Direction.RIGHT){
                   this._arno.body.velocity.x = 250;
+                  
+                    //moveDirection.x = this._speed;
                     if(this._arno.scale.x < 0)
                         this._arno.scale.x *= -1;
                       
@@ -174,6 +185,8 @@ var PlayScene = {
                   }
                 if(this._playerState === PlayerState.FALLING){
                     this._arno.body.velocity.y = 400;
+                    //moveDirection.y = 0;
+                    //moveDirection.x = 200;
                   }
                 break;    
         }
@@ -181,13 +194,15 @@ var PlayScene = {
         this.enviromentAnimations();
         this.checkPlayerDeath();
         this.checkPlayerPause();
-        this.checkEndLevel();
+        this.checkPlayerCollisions();
         this.input.onDown.add(this.isUnpaused, this);
     },    
     
     enviromentAnimations: function () {
       
       this.end.animations.play('idle');
+      this.teleport1.animations.play('idle');
+      this.teleport2.animations.play('idle');
       for(var i = 0; i < this._enemiesTotal; ++i){
         this._enemies[i].enemy.animations.play('enemy_idle');
       }
@@ -227,14 +242,17 @@ var PlayScene = {
           this.input.onDown.add(this.isUnpaused, this);
     },
 
-    checkEndLevel: function () {
+    checkPlayerCollisions: function () {
       if(this.game.physics.arcade.collide(this._arno, this.end))
         this.onPlayerEnd();
+      if(this.game.physics.arcade.collide(this._arno, this.teleport1)){
+        this._arno.x = this.teleport2.x;
+        this._arno.y = this.teleport2.y;
+      }
     }, 
 
     onPlayerEnd: function () {
-      this.game.nextLvl = 2;
-      this.game.state.start('preloader');   
+      this.game.state.start('end');
     },
 
     isStanding: function(){
@@ -316,7 +334,8 @@ var PlayScene = {
         this.game.stage.backgroundColor = "#000000";
         this.game.physics.arcade.enable(this._arno);
         this.game.physics.arcade.enable(this.end);
-        
+        this.game.physics.arcade.enable(this.teleport1);
+
         this._arno.body.collideWorldBounds = true;
         this._arno.body.setSize(300, 480);
         this._arno.body.bounce.y = 0;
@@ -330,7 +349,6 @@ var PlayScene = {
     //***
     shutdown: function() {
       console.log("shutdown");
-      this.cache.removeImage('tiles');
       this.cache.removeImage('tiles2');
       for(var i = 0; i < this._enemiesTotal; ++i)
         this._enemies.pop();
@@ -340,4 +358,4 @@ var PlayScene = {
     
 };
     
-module.exports = PlayScene;
+module.exports = Play2Scene;
