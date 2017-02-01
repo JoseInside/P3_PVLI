@@ -28,7 +28,7 @@ var PlayScene = {
 
       //*** CREACIÓN DE ASSETS DEL ENTORNO ***
 
-      this.map = this.game.add.tilemap('tilemap2');
+      this.map = this.game.add.tilemap('tilemap_lvl1');
       this.map.addTilesetImage('tileset','tiles');
       this.map.addTilesetImage('TileKit','tiles2');
       
@@ -54,21 +54,22 @@ var PlayScene = {
       this.death.setScale(1,1);
 
       //*** ASSETS DE EFECTOS Y MÚSICA ***
-      this.musica_fondo = this.game.add.audio('audio_fondo');
+      this.musica_fondo = this.game.add.audio('lvl1_music');
       this.jump = this.game.add.audio('jump');
       this.musica_fondo.loop = true;
+      this.jump.volume = 0.3;
       this.musica_fondo.play();
 
       //*** ASSETS ENEMIGOS ***
 
-       this._enemies.push(new this.EnemyLight(this.game, 300, 850));
-       this._enemies.push(new this.EnemyLight(this.game, 1526, 1040));
+       this._enemies.push(new this.EnemyLight(this.game, 927, 1000));
+       this._enemies.push(new this.EnemyLight(this.game, 1280, 950));
        this._enemies.push(new this.EnemyLight(this.game, 495, 850));
 
       //*** ASSETS JUGADOR ***
       this._arno = this.game.add.sprite(100, 1400, 'Idle__000');
-      this._arno.scale.setTo(0.1,0.1);
-      this._arno.anchor.setTo(0,0);
+      this._arno.scale.setTo(1.08);
+      this._arno.anchor.setTo(0.5);
       //resize world and adjust to the screen
       this.groundLayer.resizeWorld(); 
       
@@ -124,7 +125,7 @@ var PlayScene = {
             case PlayerState.JUMP:
                 
                 var currentJumpHeight = this._arno.y - this._initialJumpHeight;
-                this._playerState = (currentJumpHeight*currentJumpHeight < this._jumpHight*this._jumpHight)
+                this._playerState = (currentJumpHeight*currentJumpHeight < this._jumpHight*this._jumpHight) && (!this._arno.body.blocked.up)
                     ? PlayerState.JUMP : PlayerState.FALLING;
                 break;
                 
@@ -318,8 +319,8 @@ var PlayScene = {
         this.game.physics.arcade.enable(this.end);
         
         this._arno.body.collideWorldBounds = true;
-        this._arno.body.setSize(300, 480);
-        this._arno.body.bounce.y = 0;
+        this._arno.body.setSize(15, 45);
+        this._arno.body.bounce.y = 0.15;
         this._arno.body.gravity.y = 1500;
         this._arno.body.gravity.x = 0;
         this._arno.body.velocity.x = 0;
@@ -335,6 +336,7 @@ var PlayScene = {
       for(var i = 0; i < this._enemiesTotal; ++i)
         this._enemies.pop();
       this.jump.destroy();
+      this.musica_fondo.destroy();
       this.game.world.setBounds(0,0,800,600);
     }
     

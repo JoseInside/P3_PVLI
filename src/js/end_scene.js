@@ -10,10 +10,12 @@ var EndScene = {
         var endText = this.game.add.text(400, 100, "Congratz! You've reached the clouds!");
         var rText = this.game.add.text (0, 0, "Main Menu");
 
-        var button = this.game.add.button(400, 200, 'button', this.returnMenu, this, 2, 1, 0);
+        var button = this.game.add.button(400, 450, 'button', this.returnMenu, this, 2, 1, 0);
         button.anchor.set(0.5);
         button.addChild(rText);
-        
+
+        this._arno = this.game.add.sprite(340, 230, 'final_arno');
+        this.game.add.tween(this._arno).to( { alpha: 0 }, 2000, Phaser.Easing.Linear.None, true, 0, 1000, true);
         endText.font ='Sniglet';
         rText.font = 'Sniglet';
         endText.addColor("#FFFFFF", 0);
@@ -21,16 +23,22 @@ var EndScene = {
         endText.anchor.set(0.5);
         rText.anchor.set(0.5);
 
-        this.intro_music = this.game.add.audio('intro');
-        this.intro_music.loop = true;
-        this.intro_music.play();
+        this.final_music = this.game.add.audio('final');
+        this.final_music.loop = true;
+        this.final_music.play();
 
     },
     
     //TODO 7 declarar el callback del boton.
     returnMenu: function() {
       this.game.state.start('menu');
-    },  
+    },
+
+    shutdown: function() {
+
+        this.final_music.destroy();
+        this._arno.destroy();
+    }
 };
 
 module.exports = EndScene;

@@ -2,8 +2,10 @@
 
 //Enumerados: PlayerState son los estado por los que pasa el player. Directions son las direcciones a las que se puede
 //mover el player.
-var PlayerState = {'JUMP':0, 'RUN':1, 'FALLING':2, 'STOP':3}
+var PlayerState = {'JUMP':0, 'RUN':1, 'FALLING':2, 'STOP':3, 'FINAL': 4}
 var Direction = {'LEFT':0, 'RIGHT':1, 'NONE':3}
+
+var vuelta = false;
 
 //Scena de juego.
 var Play2Scene = {
@@ -13,8 +15,11 @@ var Play2Scene = {
     _jumpHight: 130, //altura máxima del salto.
     _playerState: PlayerState.STOP, //estado del player
     _direction: Direction.NONE,  //dirección inicial del player. NONE es ninguna dirección.
-    _enemiesTotal: 3,
-    _enemies : [],
+    _enemiesTotal: 4, //Número máximo de enemigos en este nivel.
+    _enemies : [],  //Array de enemigos.
+    _maxMove : 70, //Movimiento máximo de los enemigos.
+    _FINAL : false, //Final del juego (bool).
+
 
   create: function () {
       //Creamos al player con un sprite por defecto.
@@ -27,11 +32,9 @@ var Play2Scene = {
         fondoJuego.fixedToCamera = true;
         fondoJuego.scale.setTo(0.4);
 
-      
       //*** CREACIÓN DE ASSETS DEL ENTORNO ***
 
       this.map = this.game.add.tilemap('tilemap_lvl2');
-      //this.map.addTilesetImage('tileset','tiles');
       this.map.addTilesetImage('TileKit','tiles2');
       
       //Creacion de las layers
@@ -42,14 +45,22 @@ var Play2Scene = {
       this.death = this.map.createLayer('Death');
       
       //*** ASSET PASO DE NIVEL (PORTAL) ***
-      this.end = this.game.add.sprite(988, 400, '00_portal');
-      this.end.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
-      this.end.scale.setTo(0.5);
+      this.end = this.game.add.sprite(980, 450, 'wings');
+      this.end.scale.setTo(0.7);
+
+      this.final = this.game.add.sprite(905, 150, 'Portal__000');
+      this.final.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
+      this.final.anchor.setTo(0);
+      this.final.angle -= 90;
+      this.final.scale.setTo(0.9);
+
+      console.log(this.final)
       //Teletransporte
-      this.teleport1 = this.game.add.sprite(1496, 1160, '00_portal');
+      this.teleport1 = this.game.add.sprite(1496, 1060, '00_portal');
       this.teleport1.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
       this.teleport1.scale.setTo(0.5);
-      this.teleport2 = this.game.add.sprite(78, 1000, '00_portal');
+
+      this.teleport2 = this.game.add.sprite(78, 960, '00_portal');
       this.teleport2.animations.add('idle', Phaser.Animation.generateFrameNames('Portal__',0,3,'',3),10,true);
       this.teleport2.scale.setTo(0.5);
 
@@ -63,21 +74,28 @@ var Play2Scene = {
       this.death.setScale(1,1);
 
       //*** ASSETS DE EFECTOS Y MÚSICA ***
-      this.musica_fondo = this.game.add.audio('audio_fondo');
+      this.musica_fondo = this.game.add.audio('lvl2_music');
       this.jump = this.game.add.audio('jump');
+      this.jump.volume = 0.3;
       this.musica_fondo.loop = true;
       this.musica_fondo.play();
+      this.death_sound = this.game.add.audio('death');
+      this.death_sound.volume = 0.4;
+      this.end_sound = this.game.add.audio('end_sound');
 
       //*** ASSETS ENEMIGOS ***
 
-       this._enemies.push(new this.EnemyLight(this.game, 1005, 1010));
-       this._enemies.push(new this.EnemyLight(this.game, 392, 1321));
-       this._enemies.push(new this.EnemyLight(this.game, 829, 1350));
+       this._enemies.push(new this.EnemyLight(this.game, 990, 1010, 1));
+       this._enemies.push(new this.EnemyLight(this.game, 380, 1321, 2));
+       this._enemies.push(new this.EnemyLight(this.game, 829, 1350, 1));
+       this._enemies.push(new this.EnemyLight(this.game, 1215, 1230, 1));
 
       //*** ASSETS JUGADOR ***
-      this._arno = this.game.add.sprite(100, 1400, 'Idle__000');
-      this._arno.scale.setTo(0.1,0.1);
-      this._arno.anchor.setTo(0,0);
+      //this._arno = this.game.add.sprite(100, 1400, 'Idle__000');
+      this._arno = this.game.add.sprite(712, 550, 'Idle__000');
+      this._arno.scale.setTo(1.08);
+      this._arno.anchor.setTo(0.5, 1);
+      console.log(this._arno)
       //resize world and adjust to the screen
       this.groundLayer.resizeWorld(); 
       
@@ -92,12 +110,14 @@ var Play2Scene = {
       this.configure();
   },
 
-  EnemyLight: function (game, x, y) {
+  EnemyLight: function (game, x, y, type) {
 
     this.game = game;
 
     this.enemy = this.game.add.sprite(x, y,'Light__000');
     this.enemy.anchor.set(0.5);
+    this.enemy.pivote = {x, y};
+    this.enemy.AItype = type; //Type 1 or 2
 
     this.enemy.animations.add('enemy_idle', Phaser.Animation.generateFrameNames('Light__',0,4,'',3),10,true);
     this.game.physics.enable(this.enemy, Phaser.Physics.ARCADE);
@@ -109,6 +129,7 @@ var Play2Scene = {
         var collisionWithTilemap = this.game.physics.arcade.collide(this._arno, this.groundLayer);
         var movement = this.GetMovement();
         //transitions
+        if(!this._FINAL){
         switch(this._playerState)
         {
             case PlayerState.STOP:
@@ -133,7 +154,7 @@ var Play2Scene = {
             case PlayerState.JUMP:
                 
                 var currentJumpHeight = this._arno.y - this._initialJumpHeight;
-                this._playerState = (currentJumpHeight*currentJumpHeight < this._jumpHight*this._jumpHight)
+                this._playerState = (currentJumpHeight*currentJumpHeight < this._jumpHight*this._jumpHight) && (!this._arno.body.blocked.up)
                     ? PlayerState.JUMP : PlayerState.FALLING;
                 break;
                 
@@ -155,23 +176,20 @@ var Play2Scene = {
                 
             case PlayerState.STOP:
                 this._arno.body.velocity.x = 0;
-                //moveDirection.x = 0;
                 break;
             case PlayerState.JUMP:
             case PlayerState.RUN:
             case PlayerState.FALLING:
                 if(movement === Direction.RIGHT){
-                  this._arno.body.velocity.x = 250;
-                  
-                    //moveDirection.x = this._speed;
                     if(this._arno.scale.x < 0)
                         this._arno.scale.x *= -1;
+                    else this._arno.body.velocity.x = 250;
                       
                 }
                 else if(movement === Direction.LEFT){
-                  this._arno.body.velocity.x = -250;
                   if(this._arno.scale.x > 0)
                         this._arno.scale.x *= -1;
+                  else this._arno.body.velocity.x = -250;
                 }
                 else{
 
@@ -181,15 +199,17 @@ var Play2Scene = {
                 if(this._playerState === PlayerState.JUMP){
                    this._arno.body.velocity.y = -400;
                     this.jump.play();
-                    //moveDirection.y = -this._jumpSpeed;
                   }
                 if(this._playerState === PlayerState.FALLING){
-                    this._arno.body.velocity.y = 400;
-                    //moveDirection.y = 0;
-                    //moveDirection.x = 200;
+                    this._arno.body.velocity.y = 400;    
                   }
-                break;    
+                break;  
         }
+      }
+      else{
+       this._arno.body.velocity.y = -75;
+       this._arno.body.velocity.x = 0;
+      }
 
         this.enviromentAnimations();
         this.checkPlayerDeath();
@@ -203,14 +223,34 @@ var Play2Scene = {
       this.end.animations.play('idle');
       this.teleport1.animations.play('idle');
       this.teleport2.animations.play('idle');
+      this.final.animations.play('idle');
+
       for(var i = 0; i < this._enemiesTotal; ++i){
         this._enemies[i].enemy.animations.play('enemy_idle');
       }
+      this.enemyAI();
 
     },
 
+    enemyAI: function (){
+      for(var i = 0; i < this._enemiesTotal; ++i){
+        if(this._enemies[i].enemy.AItype === 1){
+          if(this._enemies[i].enemy.pivote.x + this._maxMove > this._enemies[i].enemy.x && !this.vuelta)
+            this._enemies[i].enemy.body.velocity.x = 150;
+          else if (this._enemies[i].enemy.pivote.x - this._maxMove < this._enemies[i].enemy.x){
+            this.vuelta = true;
+            this._enemies[i].enemy.body.velocity.x = -150;
+          }
+          else this.vuelta = false;
+        }
+        else if (this._enemies[i].enemy.AItype === 2){
+
+        }
+      }
+    },
+
     canJump: function(collisionWithTilemap){
-        return this.isStanding() && collisionWithTilemap || this._jamping;
+      return this.isStanding() && collisionWithTilemap || this._jamping;
     },
     
     onPlayerDeath: function(){
@@ -219,20 +259,24 @@ var Play2Scene = {
     },
     
     checkPlayerDeath: function(){
-        
-        if(this.game.physics.arcade.collide(this._arno, this.death))
+
+        if(this.game.physics.arcade.collide(this._arno, this.death)){
+          this.death_sound.play();
+          this._arno.animations.play('death');
           this.onPlayerDeath();
-        
-        var i = 0;
-        
+        }
+        var i = 0; 
         while(i < this._enemiesTotal && !this.game.physics.arcade.collide(this._arno, this._enemies[i].enemy)){
           i++;
         }
 
-        if(i < this._enemiesTotal)
-          this.onPlayerDeath();
-      
+        if(i < this._enemiesTotal){
+          this.death_sound.play();
+          this._arno.animations.play('death'); 
+          this.onPlayerDeath();         
+        } 
     },
+
     checkPlayerPause: function () {
         if(this.game.input.keyboard.isDown(Phaser.Keyboard.ESC))
           if(!this.game.paused){
@@ -243,11 +287,20 @@ var Play2Scene = {
     },
 
     checkPlayerCollisions: function () {
-      if(this.game.physics.arcade.collide(this._arno, this.end))
-        this.onPlayerEnd();
-      if(this.game.physics.arcade.collide(this._arno, this.teleport1)){
+      if(this.game.physics.arcade.collide(this._arno, this.end)){
+        this.game.add.tween(this._arno).to( { alpha: 0 }, 2000, Phaser.Easing.Linear.None, true, 0, 1000, true);
+        this._arno.loadTexture('final_arno', 0);
+        this.end.destroy();
+        this.end_sound.play();
+        this._FINAL = true;
+      }
+      if(this.game.physics.arcade.overlap(this._arno, this.teleport1)){
         this._arno.x = this.teleport2.x;
-        this._arno.y = this.teleport2.y;
+        this._playerState = PlayerState.FALLING;
+      }
+      if(this.game.physics.arcade.collide(this._arno, this.final)){
+        console.log("collide!");
+        this.onPlayerEnd();
       }
     }, 
 
@@ -335,10 +388,12 @@ var Play2Scene = {
         this.game.physics.arcade.enable(this._arno);
         this.game.physics.arcade.enable(this.end);
         this.game.physics.arcade.enable(this.teleport1);
+        this.game.physics.arcade.enable(this.final);
+        this.final.body.setSize(100, 1);
 
         this._arno.body.collideWorldBounds = true;
-        this._arno.body.setSize(300, 480);
-        this._arno.body.bounce.y = 0;
+        this._arno.body.setSize(15, 45);
+        this._arno.body.bounce.y = 0.15;
         this._arno.body.gravity.y = 1500;
         this._arno.body.gravity.x = 0;
         this._arno.body.velocity.x = 0;
@@ -353,6 +408,7 @@ var Play2Scene = {
       for(var i = 0; i < this._enemiesTotal; ++i)
         this._enemies.pop();
       this.jump.destroy();
+      this.musica_fondo.destroy();
       this.game.world.setBounds(0,0,800,600);
     }
     

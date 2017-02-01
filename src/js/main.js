@@ -2,7 +2,7 @@
 
 //TODO 1.1 Require de las escenas, play_scene, gameover_scene y menu_scene.
 //***
-var PlayScene = require('./play_scene');
+var PlayScene = require('./lvl1_scene');
 var GameOver = require('./gameover_scene');
 var MenuScene = require('./menu_scene');
 var EndScene = require('./end_scene');
@@ -19,8 +19,9 @@ var BootScene = {
     this.game.load.image('fondo_lvl1', 'images/background.png');
     this.game.load.image('fondo_lvl2', 'images/lvl2_back.png');
     this.game.load.image('end_back', 'images/end_back.png');
-    //this.game.load.image('fondo', 'images/fondo.png');
+    this.game.load.image('final_arno', 'images/final_sprite.png');
     this.game.load.audio('intro', 'music/intro_theme.mp3');
+    this.game.load.audio('final', 'music/final_music.wav');
   },
 
   create: function () {
@@ -38,22 +39,28 @@ var PreloaderScene = {
 
       this.load.onLoadStart.add(this.loadStart, this);
       
-      //TODO 2.1 Cargar el tilemap images/map.json con el nombre de la cache 'tilemap'.
-      //la imagen 'images/simples_pimples.png' con el nombre de la cache 'tiles' y
-      // el atlasJSONHash con 'images/rush_spritesheet.png' como imagen y 'images/rush_spritesheet.json'
-      //como descriptor de la animación.
-
-      this.game.load.image('tiles','images/tileset.png');
       this.game.load.image('tiles2','images/TileKit.png');
-      this.game.load.tilemap('tilemap2', 'maps/map2.json', null, Phaser.Tilemap.TILED_JSON);
-      this.game.load.tilemap('tilemap_lvl2', 'maps/lvl2.json', null, Phaser.Tilemap.TILED_JSON);
-      this.game.load.atlasJSONHash('Idle__000','images/spritesheet.png','images/spritesheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+
+      if(this.game.nextLvl === 1){
+        this.game.load.image('tiles','images/tileset.png');
+        this.game.load.tilemap('tilemap_lvl1', 'maps/lvl1.json', null, Phaser.Tilemap.TILED_JSON);
+        this.game.load.audio('lvl1_music','music/mushroom_theme.mp3');
+      }
+      else if (this.game.nextLvl === 2){
+        this.game.load.image('wings', 'images/wings.png');
+        this.game.load.image('final_arno', 'images/final_sprite.png');
+        this.game.load.tilemap('tilemap_lvl2', 'maps/lvl2.json', null, Phaser.Tilemap.TILED_JSON);
+        this.game.load.atlasJSONHash('Portal__000','images/final_sheet.png','images/final_sheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+        this.game.load.audio('lvl2_music', 'music/lvl2_music.mp3');
+        this.game.load.audio('end_sound','music/end_sound.wav');
+
+      }
+      
+      this.game.load.atlasJSONHash('Idle__000','images/satyr_sheet.png','images/satyr_sheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
       this.game.load.atlasJSONHash('00_portal','images/end_portal.png','images/end_portal.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
       this.game.load.atlasJSONHash('Light__000','images/enemysheet.png','images/enemysheet.json', Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
-
-      this.game.load.audio('audio_fondo','music/iceland_theme.mp3');
       this.game.load.audio('jump','music/jump.mp3');
-      
+      this.game.load.audio('death','music/death.mp3');
       this.game.load.onLoadComplete.add(this.loadComplete,this);
   
   },
@@ -63,26 +70,21 @@ var PreloaderScene = {
     console.log("Game Assets Loading ...");   
   },
     
-    
-     //TODO 2.2b function loadComplete()
-    loadComplete: function () {
-        this._ready = true;   
-        console.log("Assets loaded");
+  loadComplete: function () {
+    this._ready = true;   
+    console.log("Assets loaded");
 
-        console.log(this.game.nextLvl);
-        if(this.game.nextLvl === 1){
-     
-        this.game.state.start('lvl2');    
-        }
-        else if (this.game.nextLvl === 2){
-
-          this.game.state.start('lvl2'); 
-        }
-    },
-    
-    update: function(){
-        this._loadingBar
+    if(this.game.nextLvl === 1){
+      this.game.state.start('lvl1');    
     }
+    else if (this.game.nextLvl === 2){
+      this.game.state.start('lvl2'); 
+    }
+  },
+    
+  update: function(){
+    this._loadingBar
+  }
 };
 
 var wfconfig = {
@@ -106,7 +108,7 @@ function init () {
 
       game.state.add('boot', BootScene);
       game.state.add('preloader', PreloaderScene);
-      game.state.add('play',PlayScene);
+      game.state.add('lvl1',PlayScene);
       game.state.add('gameOver', GameOver);
       game.state.add('menu', MenuScene);
       game.state.add('end', EndScene);
@@ -116,8 +118,7 @@ function init () {
       
 
  };
-//TODO 3.2 Cargar Google font cuando la página esté cargada con wfconfig.
-//TODO 3.3 La creación del juego y la asignación de los states se hará en el método init().
+
 
 window.onload = function () {
        WebFont.load(wfconfig); 
